@@ -1,14 +1,16 @@
 #include "aes192.h"
 
 //TODO
-//remove blocks feature
-//- enhance file interface
-//- write cleaner ivec xor wrapper function
-//support init data + poly read from file
+//enhance file interface
+//write cleaner ivec xor wrapper function
+//read init data + poly from file
+//lfsr array -> needed for decryption, solution
+//edit helper file
+//set/read key from file
+//set/read poly + init data (lfsr) from file
 
-void printblock(data2d&);
-
-AES192::AES192(const uch * data, const ui32& sz, const std::array<uch, keysize_bytes>& key) : round(0), key(key), dh(std::make_unique<data_handler>(data, sz)), is_encrypted(false), aes_state(true) {
+AES192::AES192(const uch * data, const ui32& sz, const std::array<uch, keysize_bytes>& key)
+: round(0), key(key), dh(std::make_unique<data_handler>(data, sz)), is_encrypted(false), aes_state(true) {
 	key_expansion();
 	aes_blocks = dh->fetch_aes_blocksz();
 	padding = dh->fetch_paddsz();
@@ -19,6 +21,15 @@ AES192::AES192(const uch * data, const ui32& sz, const std::array<uch, keysize_b
 AES192::AES192(const uch * data, const ui32& sz, std::array<uch, keysize_bytes>&& key)
 : round(0), key(std::move(key)), dh(std::make_unique<data_handler>(data, sz)), is_encrypted(false), aes_state(true) {
 
+	key_expansion();
+	aes_blocks = dh->fetch_aes_blocksz();
+	padding = dh->fetch_paddsz();
+
+	ivec = std::make_unique<lfsr_prng>(0xabeaf, 0xacead);
+}
+
+AES192::AES192(const std::array<uch, keysize_bytes>& key) 
+: round(0), key(std::move(key)), dh(std::make_unique<data_handler>()), is_encrypted(false), aes_state(true) {
 	key_expansion();
 	aes_blocks = dh->fetch_aes_blocksz();
 	padding = dh->fetch_paddsz();
@@ -391,6 +402,7 @@ AES192::cbc_encrypt() {
 
 			c = (c + 1u) % 4;
 			c ?: ++r;
+
 		}
 		blocks[block]->ret_block() = state;
 	}
@@ -430,63 +442,4 @@ AES192::cbc_decrypt() {
 		blocks[block]->ret_block() = state;
 	}
 	is_encrypted = false;
-}
-
-void
-printblock(data2d& b) {
-        for ( int x = 0 ; x < aes_cols_bytes ; ++x) {
-                for ( int y = 0 ; y < aes_cols_bytes ; ++y) {
-                        std::cout << std::hex << (ui32)b[x][y] << " ";
-                }
-        }
-        std::cout << std::endl;
-}
-
-int main() {
-
-	std::array<uch, 33> data = {0, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x32 , 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16 ,17};
-	
-	std::array<uch, 8> data2 = {0xff, 0xfe, 0xfd, 0xfc, 0xfb, 0xfa, 0xf9, 0xf8};
-
-	AES192 aes(data.data(), data.size(), aes_key);
-
-	aes.add_block(data.data(), data.size());
-	aes.add_block(data2.data(), data2.size());
-	aes.add_block({1,2,34, 93}, 4);
-	
-	try {
-		aes.unset_aes_state();
-		const std::vector<std::shared_ptr<aes_block_128bit>>& enc0 = aes.generate_output();
-		std::cout << "BEFORE:" << std::endl;
-		for ( const auto&block : enc0)
-			printblock(block->ret_block());
-
-		aes.set_aes_state();
-		aes.cbc_encrypt();
-
-		const std::vector<std::shared_ptr<aes_block_128bit>>& enc = aes.generate_output();
-		std::cout << "AFTER ENCRYPTION:" << std::endl;
-		for ( const auto&block : enc)
-			printblock(block->ret_block());
-	
-		
-		aes.cbc_decrypt();
-		aes.unset_aes_state();
-		const std::vector<std::shared_ptr<aes_block_128bit>>& enc2 = aes.generate_output();
-		std::cout << "AFTER DECRYPTION:" << std::endl;
-		int counter = 0;
-		for ( const auto&block : enc2) {
-			std::cout << "BLOCK " << counter++ << "::: " << std::endl;
-			printblock(block->ret_block());
-		}
-
-		std::cout << "BYTES" << std::endl; 
-		for (const auto& x : aes.ret_bytes()) 
-			std::cout << (int)x << " ";
-
-		std::cout << std::endl << aes.fetch_blocks()<<  std::endl; 
-
-	} catch(const error_handler& eh) {
-		eh.call_err_msg();	
-	}
 }

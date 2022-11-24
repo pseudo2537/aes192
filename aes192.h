@@ -50,6 +50,13 @@ class AES192 {
 	uch binary_mul(const uch&, const uch&) const;
 
 public:
+	AES192() = delete;
+
+	AES192(const uch * data, const ui32&, const std::array<uch, keysize_bytes>&); 
+	explicit AES192(const uch * data, const ui32&, std::array<uch, keysize_bytes>&&); 
+
+	AES192(const std::array<uch, keysize_bytes>&);
+
 	void cbc_encrypt();
 	void cbc_decrypt();
 
@@ -63,16 +70,12 @@ public:
 	//returns bytestream
 	std::vector<uch> ret_bytes() const;
 
-	AES192() = delete;
-
-	AES192(const uch * data, const ui32&, const std::array<uch, keysize_bytes>&); 
-	explicit AES192(const uch * data, const ui32&, std::array<uch, keysize_bytes>&&); 
+	void add_block(const uch *, const ui32&);
+	void add_block(const std::initializer_list<uch>& data, const ui32&);
 
 	//number of blocks
 	ui32 fetch_blocks() const { return aes_blocks; }
 
-	void add_block(const uch *, const ui32&);
-	void add_block(const std::initializer_list<uch>& data, const ui32&);
 };
 
 #endif

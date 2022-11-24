@@ -34,7 +34,6 @@ lfsr_prng::update_obitarr(const ui32& b) {
 
 const ui32&
 lfsr_prng::nxt_period() {
-
 	const bool& lsb = data & 1u;
 	const bool& nxtb = nxt_bit();
 	update_obitarr(lsb);

@@ -32,7 +32,7 @@ class data_handler {
 	std::vector<std::shared_ptr<aes_block_128bit>> blocks;
 
 public:
-	data_handler() = delete;
+	data_handler();
 	data_handler(const uch *, const ui32&) noexcept;
 
 	//overload containers

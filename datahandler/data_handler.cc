@@ -1,5 +1,8 @@
 #include "data_handler.h"
 
+data_handler::data_handler()
+: aes_state(true), raw_bytes(0), bytes(0), new_blocks(0), n_aes_blocks(0), padd_sz(0) {}
+
 data_handler::data_handler(const uch * data, const ui32& sz) noexcept
 : aes_state(true), raw_bytes(0), bytes(0), new_blocks(0), n_aes_blocks(0), padd_sz(0) { init_data(data, sz); }
 
