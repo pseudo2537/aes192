@@ -18,7 +18,7 @@ int main() {
 	//AES192 crypter(container.data(), container.size(), aes_key);
 
 	const unsigned int arr_sz = 4;
-	std::array<unsigned char, arr_sz> data0 = {0x11, 0x22, 0x33, 0x44};
+	const std::array<unsigned char, arr_sz> data0 = {0x11, 0x22, 0x33, 0x44};
 
 	try {
 		//in 'aes state'

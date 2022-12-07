@@ -1,21 +1,12 @@
 #include "aes192.h"
 
-//TODO
-//enhance file interface
-//write cleaner ivec xor wrapper function
-//read init data + poly from file
-//lfsr array -> needed for decryption, solution
-//edit helper file
-//set/read key from file
-//set/read poly + init data (lfsr) from file
-
 AES192::AES192(const uch * data, const ui32& sz, const std::array<uch, keysize_bytes>& key)
 : round(0), key(key), dh(std::make_unique<data_handler>(data, sz)), is_encrypted(false), aes_state(true) {
 	key_expansion();
 	aes_blocks = dh->fetch_aes_blocksz();
 	padding = dh->fetch_paddsz();
 
-	ivec = std::make_unique<lfsr_prng>(0xabeaf, 0xacead);
+	ivec = std::make_unique<lfsr_prng>(POLY, INIT_DATA);
 }
 
 AES192::AES192(const uch * data, const ui32& sz, std::array<uch, keysize_bytes>&& key)
@@ -25,7 +16,7 @@ AES192::AES192(const uch * data, const ui32& sz, std::array<uch, keysize_bytes>&
 	aes_blocks = dh->fetch_aes_blocksz();
 	padding = dh->fetch_paddsz();
 
-	ivec = std::make_unique<lfsr_prng>(0xabeaf, 0xacead);
+	ivec = std::make_unique<lfsr_prng>(POLY, INIT_DATA);
 }
 
 AES192::AES192(const std::array<uch, keysize_bytes>& key) 
@@ -34,7 +25,7 @@ AES192::AES192(const std::array<uch, keysize_bytes>& key)
 	aes_blocks = dh->fetch_aes_blocksz();
 	padding = dh->fetch_paddsz();
 
-	ivec = std::make_unique<lfsr_prng>(0xabeaf, 0xacead);
+	ivec = std::make_unique<lfsr_prng>(POLY, INIT_DATA);
 }
 
 void
@@ -395,12 +386,16 @@ AES192::cbc_encrypt() {
 		r = c = 0;
 		for ( ui16 l = 0; l < AES_BLOCK_BYTES ; ++l ) {
 			
+			//evolve next period of lfsr
 			if ( !c ) cpoly = ivec->nxt_period();
 
 			xbyte = (cpoly >> (c << 3)) & 0xff;
+			//xor with lfsr word
 			state[r][c] ^= xbyte;
 
+			//update row and col positions
 			c = (c + 1u) % 4;
+			//block size of 0x10 -> r has not to be handled in GF(4)
 			c ?: ++r;
 
 		}
