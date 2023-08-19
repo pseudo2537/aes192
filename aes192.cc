@@ -19,7 +19,7 @@ AES192::AES192(const uch * data, const ui32& sz, std::array<uch, keysize_bytes>&
 	ivec = std::make_unique<lfsr_prng>(POLY, INIT_DATA);
 }
 
-AES192::AES192(const std::array<uch, keysize_bytes>& key) 
+AES192::AES192(const std::array<uch, keysize_bytes>& key)
 : round(0), key(std::move(key)), dh(std::make_unique<data_handler>()), is_encrypted(false), aes_state(true) {
 	key_expansion();
 	aes_blocks = dh->fetch_aes_blocksz();
@@ -55,9 +55,9 @@ AES192::binary_mul(const uch& val, const uch& fact) const {
 	 *
 	 * Operations:
 	 *
-	 * 	2a -> 2a, if a < 128
-	 * 	2a -> 2a XOR 0x11b if a >= 128
-	 * 	3a = 2a XOR a
+	 *	2a -> 2a, if a < 128
+	 *	2a -> 2a XOR 0x11b if a >= 128
+	 *	3a = 2a XOR a
 	 *	...
 	 *	...
 	 *	9a = a * (8 XOR 1) = 8a XOR a = (2*2*2)a XOR a
@@ -118,7 +118,7 @@ AES192::arr2word(const std::array<uch, 0x4>& a) const {
 	ret |= (ui32)(a[1] << 0x10);
 	ret |= (ui32)(a[2] << 0x08);
 	ret |= a[3];
-	return ret;	
+	return ret;
 }
 
 void
@@ -184,7 +184,7 @@ AES192::mix_cols() {
 		state[2][x] = binary_mul(s[2], 2) ^
 			binary_mul(s[3], 3) ^
 			s[0] ^
-			s[1]; 
+			s[1];
 
 		state[3][x] = binary_mul(s[0], 3) ^
 			binary_mul(s[3], 2) ^
@@ -232,7 +232,7 @@ AES192::round_key() {
 	for ( int x = 0 ; x < aes_cols_bytes ; ++x) {
 		a = &state[0][x], b = &state[1][x],
 		c = &state[2][x], d = &state[3][x];
-	
+
 		//generate word, XOR with current key, transform, extract
 		w = arr2word({*a, *b, *c, *d}) ^ key_schedule[round * aes_cols_bytes + x];
 		key = word2arr(w);
@@ -251,7 +251,7 @@ AES192::sub_word(const ui32& word) {
 	uch b = (word & (ui32)0xff000000) >> 0x18;
 
 	ret |= ((ui32)sbox[b] << 0x18);
-	
+
 	b = (word & (ui32)0x00ff0000) >> 0x10;
 	ret |= ((ui32)sbox[b] << 0x10);
 
@@ -265,13 +265,13 @@ AES192::sub_word(const ui32& word) {
 
 ui32 inline
 AES192::rot_word(const ui32& word) {
-	return 	((ui32)word << 0x8) | ((word >> 0x18) & 0xff);
+	return ((ui32)word << 0x8) | ((word >> 0x18) & 0xff);
 }
 
 void
 AES192::key_expansion() {
 	ui32 word {0}, rcon {0x1000000};
-	ui32 idx {0};	
+	ui32 idx {0};
 	uch sh {0};
 
 	while (idx < aes_words_bytes) {
@@ -321,7 +321,7 @@ AES192::ret_bytes() const {
 	for ( size_t block = 0 ; block < aes_blocks ; ++block)
 		for ( const auto& d2 : cont[block]->ret_block())
 			for ( size_t byte = 0 ; byte < aes_cols_bytes ; ++byte)
-				ret.emplace_back(d2[byte]);	
+				ret.emplace_back(d2[byte]);
 	return ret;
 }
 
@@ -333,7 +333,7 @@ AES192::raw_aes192_encrypt() {
 	++round;
 
 	for ( int x = 1 ; x <= (AES_ROUNDS - 1); ++x, ++round) {
-		sub_bytes();	
+		sub_bytes();
 		shift_words();
 		mix_cols();
 		round_key();
@@ -349,12 +349,12 @@ void
 AES192::raw_aes192_decrypt() {
 
 	round = AES_ROUNDS;
-	round_key();		
+	round_key();
 	--round;
 
 	for ( int x = 1 ; x <= (AES_ROUNDS - 1); ++x, --round) {
 
-		inv_shift_words();	
+		inv_shift_words();
 		inv_sub_bytes();
 		round_key();
 		inv_mix_cols();
@@ -365,10 +365,10 @@ AES192::raw_aes192_decrypt() {
 	round_key();
 }
 
-void 
+void
 AES192::cbc_encrypt() {
 
- 	uch xbyte {0}, r {0} , c {0};
+	uch xbyte {0}, r {0} , c {0};
 	ui32 cpoly {0};
 
 	//validation
@@ -376,7 +376,7 @@ AES192::cbc_encrypt() {
 	if (!dh->is_in_aes_state()) throw error_handler("Not in AES state!");
 
 	//fetch stored blocks
-	const std::vector<std::shared_ptr<aes_block_128bit>>& blocks = dh->ret_blocks(); 
+	const std::vector<std::shared_ptr<aes_block_128bit>>& blocks = dh->ret_blocks();
 	for ( size_t block = 0 ; block < aes_blocks ; ++block) {
 
 		//fetch block from handler struct
@@ -385,7 +385,7 @@ AES192::cbc_encrypt() {
 
 		r = c = 0;
 		for ( ui16 l = 0; l < AES_BLOCK_BYTES ; ++l ) {
-			
+
 			//evolve next period of lfsr
 			if ( !c ) cpoly = ivec->nxt_period();
 
@@ -404,10 +404,10 @@ AES192::cbc_encrypt() {
 	is_encrypted = true;
 }
 
-void 
+void
 AES192::cbc_decrypt() {
 
- 	uch xbyte {0}, r {0} , c {0};
+	uch xbyte {0}, r {0} , c {0};
 	ui32 cpoly { 0};
 
 	//validation
@@ -415,9 +415,9 @@ AES192::cbc_decrypt() {
 	if (!dh->is_in_aes_state()) throw error_handler("Not in AES state!");
 
 	//fetch stored blocks
-	const std::vector<std::shared_ptr<aes_block_128bit>>& blocks = dh->ret_blocks(); 
+	const std::vector<std::shared_ptr<aes_block_128bit>>& blocks = dh->ret_blocks();
 
-	cpoly = ivec->ret_data();	
+	cpoly = ivec->ret_data();
 	for ( ssize_t block = (aes_blocks - 1u) ; block >= 0; --block) {
 		state = blocks[block]->ret_block();
 

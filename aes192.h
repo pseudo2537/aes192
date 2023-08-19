@@ -26,13 +26,13 @@ class AES192 {
 	uch lrot_uchar(const uch& c, const int& n = 1) const { return (c << n) | (c >> (8 - n)); }
 	uch rrot_uchar(const uch& c, const int& n = 1) const { return (c >> n) | (c << (8 - n)); }
 
-	void sub_bytes();	
+	void sub_bytes();
 	void shift_words();
 	void mix_cols();
 
 	void inv_mix_cols();
 	void inv_shift_words();
-	void inv_sub_bytes();	
+	void inv_sub_bytes();
 
 	void key_expansion();
 	void round_key();
@@ -52,8 +52,8 @@ class AES192 {
 public:
 	AES192() = delete;
 
-	AES192(const uch * data, const ui32&, const std::array<uch, keysize_bytes>&); 
-	explicit AES192(const uch * data, const ui32&, std::array<uch, keysize_bytes>&&); 
+	AES192(const uch * data, const ui32&, const std::array<uch, keysize_bytes>&);
+	explicit AES192(const uch * data, const ui32&, std::array<uch, keysize_bytes>&&);
 
 	AES192(const std::array<uch, keysize_bytes>&);
 
@@ -75,7 +75,6 @@ public:
 
 	//number of blocks
 	ui32 fetch_blocks() const { return aes_blocks; }
-
 };
 
 #endif

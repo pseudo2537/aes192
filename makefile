@@ -1,5 +1,5 @@
-CC = 				g++
-CFLAGS = 			-std=c++17 -O3 -fno-unroll-loops -W -Wall
+CC =				g++
+CFLAGS =			-std=c++17 -O3 -fno-unroll-loops -W -Wall
 
 target =			crypter
 
@@ -11,4 +11,4 @@ aes: $(target).cc
 	$(CC) $< -o $(target) $(depcies) $(CFLAGS)
 
 clean:
-	rm -f *.o
+	rm -f *.o $(target)
